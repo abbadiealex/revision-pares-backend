@@ -1,0 +1,257 @@
+{
+  "info": {
+    "name": "Plataforma Revision por Pares - REST API",
+    "_postman_id": "b2a9f8cf-8f5a-4f70-a5f4-0c3a6b8a0001",
+    "description": "Coleccion minima para probar auth, usuarios, tareas, rubricas, asignaciones y evaluaciones.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "token", "value": "" },
+    { "key": "profesorToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "rubricaId", "value": "" },
+    { "key": "tareaId", "value": "" },
+    { "key": "asignacionId", "value": "" },
+    { "key": "evaluacionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Alumno Nuevo\",\n  \"correo\": \"nuevo@iteso.mx\",\n  \"password\": \"Alumno123\",\n  \"rol\": \"alumno\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login Profesor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"profesor@iteso.mx\",\n  \"password\": \"Profesor123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login Alumno",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"alex@iteso.mx\",\n  \"password\": \"Alumno123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "GET usuarios paginados",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/usuarios?page=1&limit=10&rol=alumno&activo=true"
+          }
+        },
+        {
+          "name": "POST usuario",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Evaluador API\",\n  \"correo\": \"evaluador.api@iteso.mx\",\n  \"password\": \"Evaluador123\",\n  \"rol\": \"evaluador\"\n}"
+            },
+            "url": "{{baseUrl}}/usuarios"
+          }
+        },
+        {
+          "name": "GET usuario por id",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/usuarios/{{userId}}"
+          }
+        },
+        {
+          "name": "PATCH usuario",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"activo\": true\n}" },
+            "url": "{{baseUrl}}/usuarios/{{userId}}"
+          }
+        },
+        {
+          "name": "DELETE usuario",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/usuarios/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rubricas",
+      "item": [
+        {
+          "name": "GET rubricas paginadas",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": "{{baseUrl}}/rubricas?page=1&limit=10&activa=true"
+          }
+        },
+        {
+          "name": "POST rubrica",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Rubrica API\",\n  \"descripcion\": \"Rubrica para revision de API REST.\",\n  \"materia\": \"Desarrollo de Aplicaciones y Servicios Web\",\n  \"criterios\": [\n    { \"nombre\": \"Modelo\", \"puntaje_maximo\": 30, \"orden\": 1 },\n    { \"nombre\": \"Endpoints\", \"puntaje_maximo\": 40, \"orden\": 2 },\n    { \"nombre\": \"Validaciones\", \"puntaje_maximo\": 30, \"orden\": 3 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/rubricas"
+          }
+        },
+        {
+          "name": "GET rubrica por id",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": "{{baseUrl}}/rubricas/{{rubricaId}}"
+          }
+        },
+        {
+          "name": "PATCH rubrica",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"activa\": true\n}" },
+            "url": "{{baseUrl}}/rubricas/{{rubricaId}}"
+          }
+        },
+        {
+          "name": "DELETE rubrica",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/rubricas/{{rubricaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tareas",
+      "item": [
+        {
+          "name": "GET tareas paginadas",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/tareas?page=1&limit=10&estado=en_revision"
+          }
+        },
+        {
+          "name": "POST tarea PDF",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "titulo", "value": "Ensayo API REST", "type": "text" },
+                { "key": "materia", "value": "Desarrollo de Aplicaciones y Servicios Web", "type": "text" },
+                { "key": "rubrica_id", "value": "{{rubricaId}}", "type": "text" },
+                { "key": "archivo", "type": "file", "src": "" }
+              ]
+            },
+            "url": "{{baseUrl}}/tareas"
+          }
+        },
+        {
+          "name": "GET mis tareas",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": "{{baseUrl}}/tareas/mias?page=1&limit=10"
+          }
+        },
+        {
+          "name": "PATCH calificacion final",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"calificacion\": 9.2,\n  \"comentario\": \"Entrega completa y bien justificada.\"\n}" },
+            "url": "{{baseUrl}}/tareas/{{tareaId}}/calificacion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Asignaciones y Evaluaciones",
+      "item": [
+        {
+          "name": "GET mis asignaciones",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": "{{baseUrl}}/asignaciones/mias"
+          }
+        },
+        {
+          "name": "GET asignaciones vencidas",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/asignaciones/vencidas"
+          }
+        },
+        {
+          "name": "POST evaluacion",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asignacion_id\": \"{{asignacionId}}\",\n  \"comentario_general\": \"Buen trabajo general.\",\n  \"criterios\": [\n    { \"criterio_id\": \"000000000000000000000000\", \"puntaje_otorgado\": 35, \"comentario\": \"Claro.\" }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/evaluaciones"
+          }
+        },
+        {
+          "name": "PATCH borrador",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"comentario_general\": \"Borrador parcial\",\n  \"criterios\": []\n}" },
+            "url": "{{baseUrl}}/evaluaciones/{{asignacionId}}/borrador"
+          }
+        }
+      ]
+    }
+  ]
+}

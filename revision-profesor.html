@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Revisión del Profesor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="dashboard-profesor.html">Revisión por Pares</a>
+      <div class="ms-auto">
+        <a href="dashboard-profesor.html" class="btn btn-light btn-sm">Volver</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2 class="page-title">Revisión y calificación final</h2>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card card-shadow p-3">
+          <div class="card-body">
+            <h5>Tarea seleccionada</h5>
+            <p class="mb-1"><strong>Tarea:</strong> Ensayo API REST</p>
+            <p class="mb-3"><strong>Alumno:</strong> Juan Pérez</p>
+
+            <h6>Evaluaciones recibidas</h6>
+            <ul class="list-group">
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Evaluación 1</span>
+                <span class="fw-bold">90</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Evaluación 2</span>
+                <span class="fw-bold">85</span>
+              </li>
+            </ul>
+
+            <div class="alert alert-info mt-3 mb-0">
+              Promedio sugerido: <strong>87.5</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card card-shadow p-4">
+          <form class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Calificación final</label>
+              <input type="number" class="form-control" min="0" max="10" step="0.1" required>
+              <div class="invalid-feedback">Ingresa una calificación válida.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Comentario final</label>
+              <textarea class="form-control" rows="4" required></textarea>
+              <div class="invalid-feedback">El comentario final es obligatorio.</div>
+            </div>
+
+            <div class="alert alert-success d-none" id="successFinal">
+              Calificación final guardada correctamente.
+            </div>
+
+            <button type="submit" class="btn btn-dark">Guardar calificación</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+      const successFinal = document.getElementById('successFinal');
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          } else {
+            event.preventDefault();
+            successFinal.classList.remove('d-none');
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  </script>
+</body>
+</html>

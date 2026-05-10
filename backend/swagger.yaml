@@ -1,0 +1,581 @@
+openapi: 3.0.3
+info:
+  title: Plataforma de Revision por Pares API
+  version: 1.0.0
+  description: REST API para tareas, rubricas, usuarios, asignaciones y evaluaciones.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:3000/api
+security:
+  - bearerAuth: []
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Registrar alumno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Usuario registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Iniciar sesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Login correcto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /usuarios:
+    get:
+      tags: [Usuarios]
+      summary: Listar usuarios con filtros y paginacion
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: rol
+          in: query
+          schema:
+            type: string
+            enum: [alumno, evaluador, profesor]
+        - name: activo
+          in: query
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuarios paginados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsersResponse'
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInput'
+      responses:
+        '201':
+          description: Usuario creado
+  /usuarios/{id}:
+    get:
+      tags: [Usuarios]
+      summary: Obtener usuario por id
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Usuario encontrado
+    patch:
+      tags: [Usuarios]
+      summary: Actualizar usuario parcialmente
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Usuario actualizado
+    put:
+      tags: [Usuarios]
+      summary: Actualizar usuario
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Usuario actualizado
+    delete:
+      tags: [Usuarios]
+      summary: Eliminar o desactivar usuario
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Usuario eliminado o desactivado
+  /rubricas:
+    get:
+      tags: [Rubricas]
+      summary: Listar rubricas con filtros y paginacion
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: materia
+          in: query
+          schema:
+            type: string
+        - name: activa
+          in: query
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rubricas paginadas
+    post:
+      tags: [Rubricas]
+      summary: Crear rubrica con criterios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RubricaInput'
+      responses:
+        '201':
+          description: Rubrica creada
+  /rubricas/{id}:
+    get:
+      tags: [Rubricas]
+      summary: Obtener rubrica
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Rubrica encontrada
+    patch:
+      tags: [Rubricas]
+      summary: Actualizar rubrica parcialmente
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RubricaInput'
+      responses:
+        '200':
+          description: Rubrica actualizada
+    put:
+      tags: [Rubricas]
+      summary: Actualizar rubrica
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RubricaInput'
+      responses:
+        '200':
+          description: Rubrica actualizada
+    delete:
+      tags: [Rubricas]
+      summary: Eliminar rubrica si no esta en uso
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Rubrica eliminada
+  /tareas:
+    get:
+      tags: [Tareas]
+      summary: Listar tareas con filtros y paginacion
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [entregada, en_revision, cerrada]
+        - name: materia
+          in: query
+          schema:
+            type: string
+        - name: alumno_id
+          in: query
+          schema:
+            type: string
+        - name: rubrica_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tareas paginadas
+    post:
+      tags: [Tareas]
+      summary: Subir tarea PDF y disparar asignacion automatica
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TareaMultipartInput'
+      responses:
+        '201':
+          description: Tarea creada
+  /tareas/mias:
+    get:
+      tags: [Tareas]
+      summary: Listar tareas del alumno autenticado
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Tareas del alumno
+  /tareas/{id}:
+    get:
+      tags: [Tareas]
+      summary: Obtener tarea
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Tarea encontrada
+    patch:
+      tags: [Tareas]
+      summary: Actualizar tarea
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TareaMultipartUpdate'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TareaUpdateInput'
+      responses:
+        '200':
+          description: Tarea actualizada
+    put:
+      tags: [Tareas]
+      summary: Actualizar tarea
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TareaMultipartUpdate'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TareaUpdateInput'
+      responses:
+        '200':
+          description: Tarea actualizada
+    delete:
+      tags: [Tareas]
+      summary: Eliminar tarea
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      responses:
+        '200':
+          description: Tarea eliminada
+  /tareas/{id}/calificacion:
+    patch:
+      tags: [Tareas]
+      summary: Asignar calificacion final y cerrar tarea
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalificacionInput'
+      responses:
+        '200':
+          description: Calificacion guardada
+  /asignaciones/mias:
+    get:
+      tags: [Asignaciones]
+      summary: Listar asignaciones del evaluador autenticado
+      responses:
+        '200':
+          description: Asignaciones del evaluador
+  /asignaciones/vencidas:
+    get:
+      tags: [Asignaciones]
+      summary: Listar asignaciones vencidas
+      responses:
+        '200':
+          description: Asignaciones vencidas
+  /evaluaciones:
+    post:
+      tags: [Evaluaciones]
+      summary: Enviar evaluacion completa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluacionInput'
+      responses:
+        '201':
+          description: Evaluacion enviada
+  /evaluaciones/{id}/borrador:
+    patch:
+      tags: [Evaluaciones]
+      summary: Guardar borrador de evaluacion
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluacionInput'
+      responses:
+        '200':
+          description: Borrador guardado
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ObjectId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9a-fA-F]{24}$'
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 100
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        code:
+          type: string
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    RegisterInput:
+      type: object
+      required: [nombre, correo, password]
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        rol:
+          type: string
+          enum: [alumno]
+          default: alumno
+    UserCreateInput:
+      type: object
+      required: [nombre, correo, password, rol]
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        rol:
+          type: string
+          enum: [alumno, evaluador, profesor]
+        activo:
+          type: boolean
+    LoginInput:
+      type: object
+      required: [correo, password]
+      properties:
+        correo:
+          type: string
+          format: email
+        password:
+          type: string
+    UserUpdateInput:
+      type: object
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        password:
+          type: string
+        rol:
+          type: string
+          enum: [alumno, evaluador, profesor]
+        activo:
+          type: boolean
+    PaginatedUsersResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+    RubricaInput:
+      type: object
+      required: [titulo, materia, criterios]
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        materia:
+          type: string
+        activa:
+          type: boolean
+        criterios:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriterioInput'
+    CriterioInput:
+      type: object
+      required: [nombre, puntaje_maximo]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        puntaje_maximo:
+          type: number
+          minimum: 1
+          maximum: 100
+        orden:
+          type: number
+    TareaMultipartInput:
+      type: object
+      required: [titulo, materia, rubrica_id, archivo]
+      properties:
+        alumno_id:
+          type: string
+          description: Solo requerido cuando el profesor crea una tarea para un alumno.
+        titulo:
+          type: string
+        materia:
+          type: string
+        rubrica_id:
+          type: string
+        archivo:
+          type: string
+          format: binary
+    TareaMultipartUpdate:
+      type: object
+      properties:
+        titulo:
+          type: string
+        materia:
+          type: string
+        rubrica_id:
+          type: string
+        estado:
+          type: string
+          enum: [entregada, en_revision, cerrada]
+        archivo:
+          type: string
+          format: binary
+    TareaUpdateInput:
+      type: object
+      properties:
+        titulo:
+          type: string
+        materia:
+          type: string
+        rubrica_id:
+          type: string
+        estado:
+          type: string
+          enum: [entregada, en_revision, cerrada]
+    CalificacionInput:
+      type: object
+      required: [calificacion, comentario]
+      properties:
+        calificacion:
+          type: number
+          minimum: 0
+          maximum: 10
+        comentario:
+          type: string
+    EvaluacionInput:
+      type: object
+      required: [asignacion_id, criterios]
+      properties:
+        asignacion_id:
+          type: string
+        comentario_general:
+          type: string
+        criterios:
+          type: array
+          items:
+            type: object
+            required: [criterio_id, puntaje_otorgado]
+            properties:
+              criterio_id:
+                type: string
+              puntaje_otorgado:
+                type: number
+                minimum: 0
+                maximum: 100
+              comentario:
+                type: string

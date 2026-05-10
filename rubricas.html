@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Rúbricas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="dashboard-profesor.html">Revisión por Pares</a>
+      <div class="ms-auto">
+        <a href="dashboard-profesor.html" class="btn btn-light btn-sm">Volver</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2 class="page-title">Gestión de rúbricas</h2>
+
+    <div class="card card-shadow p-4">
+      <form class="needs-validation" novalidate>
+        <div class="mb-3">
+          <label class="form-label">Nombre de la rúbrica</label>
+          <input type="text" class="form-control" value="Rúbrica tarea 1" required>
+          <div class="invalid-feedback">El nombre es obligatorio.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-control" rows="3" required>Evalúa claridad, contenido y formato.</textarea>
+          <div class="invalid-feedback">La descripción es obligatoria.</div>
+        </div>
+
+        <h5 class="mt-4">Criterios</h5>
+
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <input type="text" class="form-control" value="Claridad" required>
+          </div>
+          <div class="col-md-6">
+            <input type="number" class="form-control" value="40" required>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-2">
+          <div class="col-md-6">
+            <input type="text" class="form-control" value="Contenido" required>
+          </div>
+          <div class="col-md-6">
+            <input type="number" class="form-control" value="40" required>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <input type="text" class="form-control" value="Formato" required>
+          </div>
+          <div class="col-md-6">
+            <input type="number" class="form-control" value="20" required>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" onclick="alert('Criterio agregado (simulado)')">Agregar criterio</button>
+          <button type="submit" class="btn btn-dark">Guardar rúbrica</button>
+        </div>
+
+        <div class="alert alert-success d-none mt-3" id="successRubrica">
+          Rúbrica guardada correctamente.
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+      const successRubrica = document.getElementById('successRubrica');
+
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          } else {
+            event.preventDefault();
+            successRubrica.classList.remove('d-none');
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  </script>
+</body>
+</html>

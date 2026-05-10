@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Alumno</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="dashboard-alumno.html">Revisión por Pares</a>
+      <div class="ms-auto">
+        <a href="login.html" class="btn btn-light btn-sm">Cerrar sesión</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2 class="page-title">Dashboard del Alumno</h2>
+    <p class="small-muted">Bienvenido, Alejandro Ortega.</p>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card card-shadow p-3 h-100">
+          <div class="card-body">
+            <h5>Última tarea</h5>
+            <p class="mb-1"><strong>Tarea:</strong> Ensayo de Arquitectura</p>
+            <p class="mb-1"><strong>Fecha:</strong> 10/04/2026</p>
+            <p class="mb-3">
+              <strong>Estado:</strong>
+              <span class="badge text-bg-warning">En evaluación</span>
+            </p>
+            <a href="mis-entregas.html" class="btn btn-outline-primary">Ver mis entregas</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card card-shadow p-3 h-100">
+          <div class="card-body">
+            <h5>Acciones rápidas</h5>
+            <p class="text-muted">Sube una nueva tarea o revisa el estado de tus entregas.</p>
+            <div class="d-grid gap-2">
+              <a href="subir-tarea.html" class="btn btn-primary">Subir tarea</a>
+              <a href="mis-entregas.html" class="btn btn-outline-secondary">Mis entregas</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
