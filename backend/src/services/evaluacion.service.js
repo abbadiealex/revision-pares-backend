@@ -1,9 +1,11 @@
 import {
   createEvaluacionDocument,
   findEvaluacionByAsignacion,
-  findEvaluacionById
+  findEvaluacionById,
+  listEvaluacionesByTarea
 } from '../repositories/evaluacion.repository.js';
 import { findAsignacionById, updateAsignacionById } from '../repositories/asignacion.repository.js';
+import { findTareaByIdPlain } from '../repositories/tarea.repository.js';
 import { HttpError } from '../utils/httpError.js';
 import {
   optionalString,
@@ -101,6 +103,17 @@ export async function enviarEvaluacion(body, user) {
   await updateAsignacionById(asignacion._id, { estado: 'completada' });
 
   return evaluacion;
+}
+
+export async function getEvaluacionesPorTarea(query) {
+  const tareaId = validateObjectId(query.tareaId, 'tareaId');
+  const tarea = await findTareaByIdPlain(tareaId);
+
+  if (!tarea) {
+    throw new HttpError(404, 'Tarea no encontrada', 'NOT_FOUND');
+  }
+
+  return listEvaluacionesByTarea(tareaId);
 }
 
 export async function guardarBorrador(id, body, user) {

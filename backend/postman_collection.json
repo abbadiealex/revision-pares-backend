@@ -304,6 +304,14 @@
           }
         },
         {
+          "name": "GET evaluaciones por tarea",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/evaluaciones?tareaId={{tareaId}}"
+          }
+        },
+        {
           "name": "POST evaluacion",
           "request": {
             "method": "POST",

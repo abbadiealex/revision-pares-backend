@@ -233,6 +233,7 @@ La calificacion y el comentario final solo son visibles para el alumno cuando `t
 | --- | --- | --- | --- |
 | `GET` | `/api/asignaciones/mias` | alumno/evaluador | Ver tareas asignadas para evaluar. |
 | `GET` | `/api/asignaciones/vencidas` | profesor | Ver asignaciones vencidas. |
+| `GET` | `/api/evaluaciones?tareaId=:id` | profesor | Ver evaluaciones enviadas de una tarea, con evaluador, criterios, puntajes y comentarios. |
 | `POST` | `/api/evaluaciones` | alumno/evaluador | Enviar evaluacion completa. |
 | `PATCH` | `/api/evaluaciones/:id/borrador` | alumno/evaluador | Guardar borrador. `:id` puede ser evaluacion o asignacion. |
 

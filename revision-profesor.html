@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Revisión del Profesor</title>
+  <title>Revision del Profesor</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand" href="dashboard-profesor.html">Revisión por Pares</a>
+      <a class="navbar-brand" href="dashboard-profesor.html">Revision por Pares</a>
       <div class="ms-auto d-flex gap-2">
         <a href="dashboard-profesor.html" class="btn btn-light btn-sm">Volver</a>
-        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesion</a>
       </div>
     </div>
   </nav>
 
   <div class="container py-4">
-    <h2 class="page-title">Revisión y calificación final</h2>
+    <h2 class="page-title">Revision y calificacion final</h2>
     <div class="alert alert-info" id="loadingMsg">Cargando tareas reales...</div>
     <div class="alert alert-danger d-none" id="errorMsg"></div>
 
@@ -38,8 +38,12 @@
             <p class="mb-1"><strong>Estado:</strong> <span id="tareaEstado">-</span></p>
             <p class="mb-3"><strong>Archivo:</strong> <a href="#" id="pdfLink" class="disabled" target="_blank" rel="noopener">Ver PDF</a></p>
 
-            <div class="alert alert-warning mb-0">
-              La API no expone un endpoint GET para listar evaluaciones recibidas. Esta pantalla sí cierra la tarea con calificación final real.
+            <h5 class="mt-4">Evaluaciones recibidas</h5>
+            <div class="alert alert-info py-2 d-none" id="evaluacionesLoading">
+              Cargando evaluaciones...
+            </div>
+            <div id="evaluacionesList" class="d-grid gap-3">
+              <p class="text-muted mb-0">Selecciona una tarea para consultar sus evaluaciones.</p>
             </div>
           </div>
         </div>
@@ -49,9 +53,9 @@
         <div class="card card-shadow p-4">
           <form class="needs-validation" id="finalGradeForm" novalidate>
             <div class="mb-3">
-              <label class="form-label" for="calificacion">Calificación final</label>
+              <label class="form-label" for="calificacion">Calificacion final</label>
               <input type="number" class="form-control" id="calificacion" min="0" max="10" step="0.1" required>
-              <div class="invalid-feedback">Ingresa una calificación válida.</div>
+              <div class="invalid-feedback">Ingresa una calificacion valida.</div>
             </div>
 
             <div class="mb-3">
@@ -62,7 +66,7 @@
 
             <div class="alert alert-success d-none" id="successFinal"></div>
 
-            <button type="submit" class="btn btn-dark" id="submitButton">Guardar calificación</button>
+            <button type="submit" class="btn btn-dark" id="submitButton">Guardar calificacion</button>
           </form>
         </div>
       </div>
@@ -85,6 +89,8 @@
       const errorMsg = document.getElementById('errorMsg');
       const successFinal = document.getElementById('successFinal');
       const submitButton = document.getElementById('submitButton');
+      const evaluacionesList = document.getElementById('evaluacionesList');
+      const evaluacionesLoading = document.getElementById('evaluacionesLoading');
       let tareas = [];
 
       function showError(message) {
@@ -99,6 +105,66 @@
 
       function getSelectedTarea() {
         return tareas.find((tarea) => tarea._id === tareaSelect.value);
+      }
+
+      function renderEvaluaciones(evaluaciones) {
+        evaluacionesList.innerHTML = '';
+
+        if (!evaluaciones.length) {
+          evaluacionesList.innerHTML = '<p class="text-muted mb-0">Esta tarea todavia no tiene evaluaciones enviadas.</p>';
+          return;
+        }
+
+        evaluaciones.forEach((evaluacion, index) => {
+          const evaluador = evaluacion.evaluador_id || {};
+          const criterios = (evaluacion.criterios || []).map((criterio) => {
+            const criterioInfo = criterio.criterio_id || {};
+            const nombre = criterioInfo.nombre || 'Criterio';
+            const maximo = criterioInfo.puntaje_maximo ? ` / ${criterioInfo.puntaje_maximo}` : '';
+            const comentario = criterio.comentario
+              ? `<div class="small text-muted">${criterio.comentario}</div>`
+              : '';
+
+            return `
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between gap-3">
+                  <span>${nombre}</span>
+                  <strong>${criterio.puntaje_otorgado}${maximo}</strong>
+                </div>
+                ${comentario}
+              </li>
+            `;
+          }).join('');
+
+          const card = document.createElement('div');
+          card.className = 'border rounded p-3 bg-light';
+          card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <h6 class="mb-1">Evaluacion ${index + 1}</h6>
+                <p class="mb-1"><strong>Evaluador:</strong> ${evaluador.nombre || evaluador.correo || 'Sin nombre disponible'}</p>
+                <p class="mb-2"><strong>Comentario general:</strong> ${evaluacion.comentario_general || 'Sin comentario general.'}</p>
+              </div>
+              <span class="badge text-bg-success">Total: ${evaluacion.puntaje_total}</span>
+            </div>
+            <ul class="list-group list-group-flush mt-2">${criterios}</ul>
+          `;
+          evaluacionesList.appendChild(card);
+        });
+      }
+
+      async function loadEvaluaciones(tareaId) {
+        evaluacionesLoading.classList.remove('d-none');
+        evaluacionesList.innerHTML = '';
+
+        try {
+          const data = await Auth.apiFetch(`/evaluaciones?tareaId=${tareaId}`);
+          renderEvaluaciones(data.evaluaciones || []);
+        } catch (error) {
+          evaluacionesList.innerHTML = `<p class="text-danger mb-0">${error.message}</p>`;
+        } finally {
+          evaluacionesLoading.classList.add('d-none');
+        }
       }
 
       function renderSelectedTarea() {
@@ -116,6 +182,12 @@
         if (tarea?.archivo_url) {
           pdfLink.href = `${Auth.API_BASE_URL.replace('/api', '')}${tarea.archivo_url}`;
           pdfLink.classList.remove('disabled');
+        }
+
+        if (tarea?._id) {
+          loadEvaluaciones(tarea._id);
+        } else {
+          evaluacionesList.innerHTML = '<p class="text-muted mb-0">Selecciona una tarea para consultar sus evaluaciones.</p>';
         }
       }
 
@@ -191,12 +263,12 @@
           renderTareas();
           tareaSelect.value = updated._id;
           renderSelectedTarea();
-          showSuccess('Calificación final guardada. La tarea quedó cerrada.');
+          showSuccess('Calificacion final guardada. La tarea quedo cerrada.');
         } catch (error) {
           showError(error.message);
         } finally {
           submitButton.disabled = false;
-          submitButton.textContent = 'Guardar calificación';
+          submitButton.textContent = 'Guardar calificacion';
         }
       });
 

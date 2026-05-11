@@ -47,7 +47,7 @@ URLs locales recomendadas para probar:
 - `http://localhost:5500/proyecto/ui-prototipo/login.html`
 - `http://127.0.0.1:5500/proyecto/ui-prototipo/login.html`
 
-Si Render ya estaba desplegado antes del ajuste de CORS y del hook de evaluaciones, hacer redeploy del backend para que acepte ambos origenes y permita enviar evaluaciones desde frontend.
+Si Render ya estaba desplegado antes del ajuste de CORS, del hook de evaluaciones y del endpoint `GET /api/evaluaciones?tareaId=...`, hacer redeploy del backend para que acepte ambos origenes, permita enviar evaluaciones desde frontend y muestre evaluaciones recibidas al profesor.
 
 Variables necesarias en `backend/.env`:
 
@@ -101,6 +101,7 @@ Se incluye `backend/.env.template` sin credenciales reales.
 | PATCH | `/api/tareas/:id/calificacion` | Asigna calificacion final y cierra tarea. | Profesor | Operativo |
 | GET | `/api/asignaciones/mias` | Lista asignaciones del evaluador autenticado. | Alumno o evaluador | Operativo |
 | GET | `/api/asignaciones/vencidas` | Lista asignaciones vencidas. | Profesor | Operativo |
+| GET | `/api/evaluaciones?tareaId=:id` | Lista evaluaciones enviadas de una tarea con evaluador, criterios, puntajes y comentarios. | Profesor | Operativo |
 | POST | `/api/evaluaciones` | Envia evaluacion completa. | Alumno o evaluador asignado | Operativo |
 | PATCH | `/api/evaluaciones/:id/borrador` | Guarda borrador por id de evaluacion o asignacion. | Alumno o evaluador asignado | Operativo |
 
@@ -126,7 +127,7 @@ Funcionalidades completadas y operativas:
 - Cierre de tarea con calificacion final por profesor.
 - Documentacion Swagger y coleccion Postman alineadas con las rutas reales.
 - Frontend HTML con pantallas principales por rol, login real contra Render, guardado de sesion y proteccion basica por rol.
-- Flujo principal conectado desde frontend: subida de tarea PDF, consulta de asignaciones, envio de evaluacion, calificacion final y consulta de entregas.
+- Flujo principal conectado desde frontend: subida de tarea PDF, consulta de asignaciones, envio de evaluacion, revision de evaluaciones recibidas por profesor, calificacion final y consulta de entregas.
 
 Pendientes o errores conocidos:
 

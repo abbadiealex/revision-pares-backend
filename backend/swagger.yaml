@@ -341,6 +341,23 @@ paths:
         '200':
           description: Asignaciones vencidas
   /evaluaciones:
+    get:
+      tags: [Evaluaciones]
+      summary: Listar evaluaciones enviadas por tarea
+      parameters:
+        - name: tareaId
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: Evaluaciones enviadas de la tarea
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluacionesByTareaResponse'
     post:
       tags: [Evaluaciones]
       summary: Enviar evaluacion completa
@@ -580,3 +597,53 @@ components:
                 maximum: 100
               comentario:
                 type: string
+    EvaluacionesByTareaResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            evaluaciones:
+              type: array
+              items:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                  evaluador_id:
+                    type: object
+                    properties:
+                      nombre:
+                        type: string
+                      correo:
+                        type: string
+                      rol:
+                        type: string
+                  puntaje_total:
+                    type: number
+                  comentario_general:
+                    type: string
+                  criterios:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        criterio_id:
+                          type: object
+                          properties:
+                            nombre:
+                              type: string
+                            puntaje_maximo:
+                              type: number
+                            orden:
+                              type: number
+                        puntaje_otorgado:
+                          type: number
+                        comentario:
+                          type: string
+        error:
+          nullable: true
+        code:
+          type: string

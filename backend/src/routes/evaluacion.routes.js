@@ -1,9 +1,20 @@
 import { Router } from 'express';
-import { enviarEvaluacion, guardarBorrador } from '../controllers/evaluacion.controller.js';
+import {
+  enviarEvaluacion,
+  guardarBorrador,
+  listarEvaluacionesPorTarea
+} from '../controllers/evaluacion.controller.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
+
+router.get(
+  '/',
+  authRequired,
+  requireRole('profesor'),
+  asyncHandler(listarEvaluacionesPorTarea)
+);
 
 router.post(
   '/',

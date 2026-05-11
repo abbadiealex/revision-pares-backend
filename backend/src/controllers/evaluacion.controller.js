@@ -1,5 +1,6 @@
 import {
   enviarEvaluacion as enviarEvaluacionService,
+  getEvaluacionesPorTarea as getEvaluacionesPorTareaService,
   guardarBorrador as guardarBorradorService
 } from '../services/evaluacion.service.js';
 import { sendSuccess } from '../utils/responses.js';
@@ -12,6 +13,11 @@ export async function enviarEvaluacion(req, res) {
     code: 'CREATED',
     data: { evaluacion }
   });
+}
+
+export async function listarEvaluacionesPorTarea(req, res) {
+  const evaluaciones = await getEvaluacionesPorTareaService(req.query);
+  return sendSuccess(res, { data: { evaluaciones } });
 }
 
 export async function guardarBorrador(req, res) {
