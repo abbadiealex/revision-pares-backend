@@ -11,8 +11,9 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand" href="dashboard-profesor.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="dashboard-profesor.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
@@ -94,6 +95,10 @@
         }, false);
       });
     })();
+  </script>
+  <script src="js/auth.js"></script>
+  <script>
+    Auth.requireRole('profesor');
   </script>
 </body>
 </html>

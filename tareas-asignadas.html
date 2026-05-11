@@ -11,14 +11,17 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
       <a class="navbar-brand" href="dashboard-evaluador.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="dashboard-evaluador.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
 
   <div class="container py-4">
     <h2 class="page-title">Tareas asignadas</h2>
+    <div class="alert alert-info" id="loadingMsg">Cargando asignaciones reales...</div>
+    <div class="alert alert-danger d-none" id="errorMsg"></div>
 
     <div class="card card-shadow p-3">
       <div class="table-responsive">
@@ -26,34 +29,87 @@
           <thead class="table-light">
             <tr>
               <th>Tarea</th>
-              <th>Alumno</th>
+              <th>Materia</th>
               <th>Fecha asignación</th>
               <th>Fecha límite</th>
               <th>Estado</th>
               <th>Acción</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="asignacionesBody">
             <tr>
-              <td>Ensayo API REST</td>
-              <td>Juan Pérez</td>
-              <td>09/04/2026</td>
-              <td>12/04/2026</td>
-              <td><span class="badge text-bg-warning">Pendiente</span></td>
-              <td><a href="evaluar-tarea.html" class="btn btn-success btn-sm">Evaluar</a></td>
-            </tr>
-            <tr>
-              <td>Diseño de Base de Datos</td>
-              <td>Ana Ruiz</td>
-              <td>08/04/2026</td>
-              <td>12/04/2026</td>
-              <td><span class="badge text-bg-secondary">Borrador</span></td>
-              <td><a href="evaluar-tarea.html" class="btn btn-outline-success btn-sm">Continuar</a></td>
+              <td colspan="6" class="text-muted">Sin datos cargados.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const user = Auth.requireRole('evaluador');
+      if (!user) return;
+
+      const tableBody = document.getElementById('asignacionesBody');
+      const loadingMsg = document.getElementById('loadingMsg');
+      const errorMsg = document.getElementById('errorMsg');
+
+      function formatDate(value) {
+        if (!value) return '-';
+        return new Date(value).toLocaleDateString('es-MX');
+      }
+
+      function badgeClass(estado) {
+        if (estado === 'completada') return 'text-bg-success';
+        if (estado === 'en_proceso') return 'text-bg-secondary';
+        if (estado === 'vencida') return 'text-bg-danger';
+        return 'text-bg-warning';
+      }
+
+      function renderAsignaciones(asignaciones) {
+        tableBody.innerHTML = '';
+
+        if (!asignaciones.length) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="text-muted">No tienes tareas asignadas.</td></tr>';
+          return;
+        }
+
+        asignaciones.forEach((asignacion) => {
+          const tarea = asignacion.tarea_id || {};
+          const row = document.createElement('tr');
+          const actionLabel = asignacion.estado === 'completada' ? 'Ver' : 'Evaluar';
+          row.innerHTML = `
+            <td>${tarea.titulo || '-'}</td>
+            <td>${tarea.materia || '-'}</td>
+            <td>${formatDate(asignacion.fecha_asignacion || asignacion.createdAt)}</td>
+            <td>${formatDate(asignacion.fecha_limite)}</td>
+            <td><span class="badge ${badgeClass(asignacion.estado)}">${asignacion.estado}</span></td>
+            <td>
+              <a href="evaluar-tarea.html?asignacion_id=${asignacion._id}" class="btn btn-success btn-sm">${actionLabel}</a>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }
+
+      async function loadAsignaciones() {
+        try {
+          const data = await Auth.apiFetch('/asignaciones/mias');
+          renderAsignaciones(data || []);
+        } catch (error) {
+          errorMsg.textContent = error.message;
+          errorMsg.classList.remove('d-none');
+        } finally {
+          loadingMsg.classList.add('d-none');
+        }
+      }
+
+      loadAsignaciones();
+    })();
+  </script>
 </body>
 </html>

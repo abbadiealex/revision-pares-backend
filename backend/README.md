@@ -70,10 +70,11 @@ Requisitos:
 
 | Variable | Ejemplo |
 | --- | --- |
+| `NODE_ENV` | `development` |
 | `PORT` | `3000` |
 | `MONGODB_URI` | `mongodb://127.0.0.1:27017/revision_pares` |
-| `JWT_SECRET` | `cambia_este_secreto_en_desarrollo` |
-| `FRONTEND_ORIGIN` | `http://localhost:5500` |
+| `JWT_SECRET` | `cambia_este_secreto_por_un_valor_largo_y_privado` |
+| `FRONTEND_ORIGIN` | `http://localhost:5500,http://127.0.0.1:5500` |
 | `EVALUACION_DIAS_LIMITE` | `7` |
 | `CRON_VENCIMIENTOS` | `0 * * * *` |
 

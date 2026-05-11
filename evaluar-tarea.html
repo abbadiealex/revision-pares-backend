@@ -11,27 +11,31 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container">
       <a class="navbar-brand" href="dashboard-evaluador.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="tareas-asignadas.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
 
   <div class="container py-4">
     <h2 class="page-title">Evaluar tarea</h2>
+    <div class="alert alert-info" id="loadingMsg">Cargando asignación real...</div>
+    <div class="alert alert-danger d-none" id="errorMsg"></div>
 
     <div class="row g-4">
       <div class="col-lg-4">
         <div class="card card-shadow p-3">
           <div class="card-body">
             <h5>Información de la tarea</h5>
-            <p class="mb-1"><strong>Tarea:</strong> Ensayo API REST</p>
-            <p class="mb-1"><strong>Alumno:</strong> Juan Pérez</p>
-            <p class="mb-3"><strong>Rúbrica:</strong> Rúbrica tarea 1</p>
+            <p class="mb-1"><strong>Tarea:</strong> <span id="tareaTitulo">-</span></p>
+            <p class="mb-1"><strong>Materia:</strong> <span id="tareaMateria">-</span></p>
+            <p class="mb-1"><strong>Estado:</strong> <span id="asignacionEstado">-</span></p>
+            <p class="mb-3"><strong>Rúbrica:</strong> <span id="rubricaTitulo">-</span></p>
 
             <div class="pdf-box">
-              <p class="mb-2 fw-semibold">Archivo PDF de ejemplo</p>
-              <a href="#" class="btn btn-outline-primary btn-sm">Ver PDF</a>
+              <p class="mb-2 fw-semibold">Archivo PDF</p>
+              <a href="#" class="btn btn-outline-primary btn-sm disabled" id="pdfLink" target="_blank" rel="noopener">Ver PDF</a>
             </div>
           </div>
         </div>
@@ -39,40 +43,20 @@
 
       <div class="col-lg-8">
         <div class="card card-shadow p-4">
-          <form class="needs-validation" novalidate>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label">Claridad (0 - 40)</label>
-                <input type="number" class="form-control" min="0" max="40" required>
-                <div class="invalid-feedback">Ingresa un puntaje válido.</div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Contenido (0 - 40)</label>
-                <input type="number" class="form-control" min="0" max="40" required>
-                <div class="invalid-feedback">Ingresa un puntaje válido.</div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="form-label">Formato (0 - 20)</label>
-                <input type="number" class="form-control" min="0" max="20" required>
-                <div class="invalid-feedback">Ingresa un puntaje válido.</div>
-              </div>
-            </div>
+          <form class="needs-validation" id="evaluacionForm" novalidate>
+            <div class="row g-3" id="criteriosContainer"></div>
 
             <div class="mt-3">
-              <label class="form-label">Comentarios</label>
-              <textarea class="form-control" rows="4" placeholder="Escribe observaciones sobre la tarea..." required></textarea>
+              <label class="form-label" for="comentarioGeneral">Comentarios generales</label>
+              <textarea class="form-control" id="comentarioGeneral" rows="4" placeholder="Escribe observaciones sobre la tarea..." required></textarea>
               <div class="invalid-feedback">El comentario es obligatorio.</div>
             </div>
 
-            <div class="alert alert-success d-none mt-3" id="successEval">
-              Evaluación enviada correctamente.
-            </div>
+            <div class="alert alert-success d-none mt-3" id="successEval"></div>
 
             <div class="d-flex gap-2 mt-4">
-              <button type="button" class="btn btn-outline-secondary" onclick="alert('Borrador guardado (simulado)')">Guardar borrador</button>
-              <button type="submit" class="btn btn-success">Enviar evaluación</button>
+              <button type="button" class="btn btn-outline-secondary" id="saveDraftButton">Guardar borrador</button>
+              <button type="submit" class="btn btn-success" id="submitButton">Enviar evaluación</button>
             </div>
           </form>
         </div>
@@ -80,27 +64,185 @@
     </div>
   </div>
 
+  <script src="js/auth.js"></script>
   <script>
     (() => {
       'use strict';
-      const forms = document.querySelectorAll('.needs-validation');
-      const successEval = document.getElementById('successEval');
 
-      Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-          if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-          } else {
-            event.preventDefault();
-            successEval.classList.remove('d-none');
-            form.reset();
-            form.classList.remove('was-validated');
+      const user = Auth.requireRole('evaluador');
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const asignacionId = params.get('asignacion_id');
+      const loadingMsg = document.getElementById('loadingMsg');
+      const errorMsg = document.getElementById('errorMsg');
+      const successEval = document.getElementById('successEval');
+      const form = document.getElementById('evaluacionForm');
+      const criteriosContainer = document.getElementById('criteriosContainer');
+      const comentarioGeneral = document.getElementById('comentarioGeneral');
+      const submitButton = document.getElementById('submitButton');
+      const saveDraftButton = document.getElementById('saveDraftButton');
+      let criterios = [];
+      let asignacionActual = null;
+
+      function showError(message) {
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('d-none');
+      }
+
+      function showSuccess(message) {
+        successEval.textContent = message;
+        successEval.classList.remove('d-none');
+      }
+
+      function hideMessages() {
+        errorMsg.classList.add('d-none');
+        successEval.classList.add('d-none');
+      }
+
+      function getTarea(asignacion) {
+        return asignacion?.tarea_id || {};
+      }
+
+      function renderCriterios(rubrica) {
+        criterios = rubrica.criterios || [];
+        criteriosContainer.innerHTML = '';
+
+        if (!criterios.length) {
+          criteriosContainer.innerHTML = '<p class="text-muted mb-0">La rúbrica no tiene criterios.</p>';
+          return;
+        }
+
+        criterios.forEach((criterio) => {
+          const col = document.createElement('div');
+          col.className = 'col-md-6';
+          col.innerHTML = `
+            <label class="form-label">${criterio.nombre} (0 - ${criterio.puntaje_maximo})</label>
+            <input type="number" class="form-control" min="0" max="${criterio.puntaje_maximo}" step="0.1" data-criterio-id="${criterio._id}" required>
+            <input type="text" class="form-control mt-2" maxlength="500" data-criterio-comentario="${criterio._id}" placeholder="Comentario del criterio">
+            <div class="invalid-feedback">Ingresa un puntaje válido.</div>
+          `;
+          criteriosContainer.appendChild(col);
+        });
+      }
+
+      function getRubricaId(tarea) {
+        if (!tarea.rubrica_id) return null;
+        return typeof tarea.rubrica_id === 'object' ? tarea.rubrica_id._id : tarea.rubrica_id;
+      }
+
+      function buildPayload() {
+        return {
+          asignacion_id: asignacionId,
+          comentario_general: comentarioGeneral.value.trim(),
+          criterios: criterios.map((criterio) => {
+            const puntajeInput = document.querySelector(`[data-criterio-id="${criterio._id}"]`);
+            const comentarioInput = document.querySelector(`[data-criterio-comentario="${criterio._id}"]`);
+            return {
+              criterio_id: criterio._id,
+              puntaje_otorgado: Number(puntajeInput.value),
+              comentario: comentarioInput.value.trim()
+            };
+          })
+        };
+      }
+
+      async function loadData() {
+        if (!asignacionId) {
+          showError('No se recibio asignacion_id. Regresa a tareas asignadas y selecciona una tarea.');
+          loadingMsg.classList.add('d-none');
+          form.classList.add('d-none');
+          return;
+        }
+
+        try {
+          const asignaciones = await Auth.apiFetch('/asignaciones/mias');
+          asignacionActual = (asignaciones || []).find((asignacion) => asignacion._id === asignacionId);
+
+          if (!asignacionActual) {
+            throw new Error('La asignación no existe o no pertenece al usuario autenticado.');
           }
 
+          const tarea = getTarea(asignacionActual);
+          const rubricaId = getRubricaId(tarea);
+
+          document.getElementById('tareaTitulo').textContent = tarea.titulo || '-';
+          document.getElementById('tareaMateria').textContent = tarea.materia || '-';
+          document.getElementById('asignacionEstado').textContent = asignacionActual.estado || '-';
+
+          if (tarea.archivo_url) {
+            const pdfLink = document.getElementById('pdfLink');
+            pdfLink.href = `${Auth.API_BASE_URL.replace('/api', '')}${tarea.archivo_url}`;
+            pdfLink.classList.remove('disabled');
+          }
+
+          if (!rubricaId) {
+            throw new Error('La tarea no tiene rúbrica asociada.');
+          }
+
+          const data = await Auth.apiFetch(`/rubricas/${rubricaId}`);
+          document.getElementById('rubricaTitulo').textContent = data.rubrica?.titulo || '-';
+          renderCriterios(data.rubrica || {});
+
+          if (asignacionActual.estado === 'completada' || asignacionActual.estado === 'vencida') {
+            submitButton.disabled = true;
+            saveDraftButton.disabled = true;
+            showError('Esta asignación ya no acepta evaluaciones.');
+          }
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          loadingMsg.classList.add('d-none');
+        }
+      }
+
+      async function saveEvaluation({ draft = false } = {}) {
+        hideMessages();
+
+        if (!form.checkValidity()) {
           form.classList.add('was-validated');
-        }, false);
+          return;
+        }
+
+        const payload = buildPayload();
+        const path = draft ? `/evaluaciones/${asignacionId}/borrador` : '/evaluaciones';
+        const method = draft ? 'PATCH' : 'POST';
+
+        submitButton.disabled = true;
+        saveDraftButton.disabled = true;
+
+        try {
+          const data = await Auth.apiFetch(path, {
+            method,
+            body: JSON.stringify(payload)
+          });
+          const evaluacion = data.evaluacion || data;
+          showSuccess(
+            draft
+              ? `Borrador guardado. Puntaje actual: ${evaluacion.puntaje_total}.`
+              : `Evaluación enviada. Puntaje total calculado por backend: ${evaluacion.puntaje_total}.`
+          );
+
+          if (!draft) {
+            submitButton.disabled = true;
+            saveDraftButton.disabled = true;
+          }
+        } catch (error) {
+          showError(error.message);
+          submitButton.disabled = false;
+          saveDraftButton.disabled = false;
+        }
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        saveEvaluation();
       });
+
+      saveDraftButton.addEventListener('click', () => saveEvaluation({ draft: true }));
+
+      loadData();
     })();
   </script>
 </body>

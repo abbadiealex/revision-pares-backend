@@ -10,9 +10,22 @@ import { startVencimientoJob } from './jobs/vencimientoJob.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
+const defaultAllowedOrigins = ['http://localhost:5500', 'http://127.0.0.1:5500'];
+const configuredAllowedOrigins = (process.env.FRONTEND_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins])];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || true
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origen no permitido por CORS: ${origin}`));
+    }
   })
 );
 app.use(express.json({ limit: '1mb' }));

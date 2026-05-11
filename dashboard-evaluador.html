@@ -12,7 +12,7 @@
     <div class="container">
       <a class="navbar-brand" href="dashboard-evaluador.html">Revisión por Pares</a>
       <div class="ms-auto">
-        <a href="login.html" class="btn btn-light btn-sm">Cerrar sesión</a>
+        <a href="login.html" class="btn btn-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
@@ -44,5 +44,9 @@
       </div>
     </div>
   </div>
+  <script src="js/auth.js"></script>
+  <script>
+    Auth.requireRole('evaluador');
+  </script>
 </body>
 </html>

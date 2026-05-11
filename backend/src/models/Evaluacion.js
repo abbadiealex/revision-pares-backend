@@ -74,12 +74,11 @@ EvaluacionSchema.index({ asignacion_id: 1 }, { unique: true });
 EvaluacionSchema.index({ tarea_id: 1 });
 EvaluacionSchema.index({ evaluador_id: 1, estado: 1 });
 
-EvaluacionSchema.pre('validate', function calcularPuntajeTotal(next) {
+EvaluacionSchema.pre('validate', function calcularPuntajeTotal() {
   this.puntaje_total = this.criterios.reduce(
     (sum, criterio) => sum + Number(criterio.puntaje_otorgado || 0),
     0
   );
-  next();
 });
 
 export const Evaluacion = model('Evaluacion', EvaluacionSchema);

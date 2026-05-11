@@ -11,14 +11,17 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <a class="navbar-brand" href="dashboard-alumno.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="dashboard-alumno.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
 
   <div class="container py-4">
     <h2 class="page-title">Mis entregas</h2>
+    <div class="alert alert-info" id="loadingMsg">Cargando entregas reales...</div>
+    <div class="alert alert-danger d-none" id="errorMsg"></div>
 
     <div class="card card-shadow p-3">
       <div class="table-responsive">
@@ -30,34 +33,88 @@
               <th>Estado</th>
               <th>Calificación</th>
               <th>Comentario</th>
+              <th>Archivo</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="tareasBody">
             <tr>
-              <td>Ensayo de Arquitectura</td>
-              <td>10/04/2026</td>
-              <td><span class="badge text-bg-warning">En evaluación</span></td>
-              <td>-</td>
-              <td>En espera de revisión final.</td>
-            </tr>
-            <tr>
-              <td>Práctica API REST</td>
-              <td>03/04/2026</td>
-              <td><span class="badge text-bg-success">Evaluada</span></td>
-              <td>9.3</td>
-              <td>Buen trabajo, buena estructura general.</td>
-            </tr>
-            <tr>
-              <td>Reporte de Base de Datos</td>
-              <td>27/03/2026</td>
-              <td><span class="badge text-bg-secondary">Pendiente</span></td>
-              <td>-</td>
-              <td>Esperando asignación de evaluadores.</td>
+              <td colspan="6" class="text-muted">Sin datos cargados.</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    (() => {
+      'use strict';
+
+      const user = Auth.requireRole('alumno');
+      if (!user) return;
+
+      const tableBody = document.getElementById('tareasBody');
+      const loadingMsg = document.getElementById('loadingMsg');
+      const errorMsg = document.getElementById('errorMsg');
+
+      function formatDate(value) {
+        if (!value) return '-';
+        return new Date(value).toLocaleDateString('es-MX');
+      }
+
+      function badgeClass(estado) {
+        if (estado === 'cerrada') return 'text-bg-success';
+        if (estado === 'en_revision') return 'text-bg-warning';
+        return 'text-bg-secondary';
+      }
+
+      function renderTareas(tareas) {
+        tableBody.innerHTML = '';
+
+        if (!tareas.length) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="text-muted">Todavía no has subido tareas.</td></tr>';
+          return;
+        }
+
+        tareas.forEach((tarea) => {
+          const row = document.createElement('tr');
+          const calificacion = tarea.estado === 'cerrada' && tarea.calificacion_final !== null
+            ? tarea.calificacion_final
+            : 'Disponible al cierre';
+          const comentario = tarea.estado === 'cerrada' && tarea.comentario_final
+            ? tarea.comentario_final
+            : 'En espera de cierre por profesor.';
+          const archivo = tarea.archivo_url
+            ? `<a href="${Auth.API_BASE_URL.replace('/api', '')}${tarea.archivo_url}" target="_blank" rel="noopener">Ver PDF</a>`
+            : '-';
+
+          row.innerHTML = `
+            <td>${tarea.titulo || '-'}</td>
+            <td>${formatDate(tarea.fecha_entrega || tarea.createdAt)}</td>
+            <td><span class="badge ${badgeClass(tarea.estado)}">${tarea.estado}</span></td>
+            <td>${calificacion}</td>
+            <td>${comentario}</td>
+            <td>${archivo}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }
+
+      async function loadTareas() {
+        try {
+          const data = await Auth.apiFetch('/tareas/mias?page=1&limit=100');
+          renderTareas(data.items || []);
+        } catch (error) {
+          errorMsg.textContent = error.message;
+          errorMsg.classList.remove('d-none');
+        } finally {
+          loadingMsg.classList.add('d-none');
+        }
+      }
+
+      loadTareas();
+    })();
+  </script>
 </body>
 </html>

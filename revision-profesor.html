@@ -11,37 +11,35 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
       <a class="navbar-brand" href="dashboard-profesor.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="dashboard-profesor.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
 
   <div class="container py-4">
     <h2 class="page-title">Revisión y calificación final</h2>
+    <div class="alert alert-info" id="loadingMsg">Cargando tareas reales...</div>
+    <div class="alert alert-danger d-none" id="errorMsg"></div>
 
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="card card-shadow p-3">
           <div class="card-body">
+            <label class="form-label" for="tareaSelect">Tarea a calificar</label>
+            <select class="form-select mb-3" id="tareaSelect" required>
+              <option value="">Cargando tareas...</option>
+            </select>
+
             <h5>Tarea seleccionada</h5>
-            <p class="mb-1"><strong>Tarea:</strong> Ensayo API REST</p>
-            <p class="mb-3"><strong>Alumno:</strong> Juan Pérez</p>
+            <p class="mb-1"><strong>Tarea:</strong> <span id="tareaTitulo">-</span></p>
+            <p class="mb-1"><strong>Materia:</strong> <span id="tareaMateria">-</span></p>
+            <p class="mb-1"><strong>Estado:</strong> <span id="tareaEstado">-</span></p>
+            <p class="mb-3"><strong>Archivo:</strong> <a href="#" id="pdfLink" class="disabled" target="_blank" rel="noopener">Ver PDF</a></p>
 
-            <h6>Evaluaciones recibidas</h6>
-            <ul class="list-group">
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Evaluación 1</span>
-                <span class="fw-bold">90</span>
-              </li>
-              <li class="list-group-item d-flex justify-content-between">
-                <span>Evaluación 2</span>
-                <span class="fw-bold">85</span>
-              </li>
-            </ul>
-
-            <div class="alert alert-info mt-3 mb-0">
-              Promedio sugerido: <strong>87.5</strong>
+            <div class="alert alert-warning mb-0">
+              La API no expone un endpoint GET para listar evaluaciones recibidas. Esta pantalla sí cierra la tarea con calificación final real.
             </div>
           </div>
         </div>
@@ -49,48 +47,160 @@
 
       <div class="col-lg-6">
         <div class="card card-shadow p-4">
-          <form class="needs-validation" novalidate>
+          <form class="needs-validation" id="finalGradeForm" novalidate>
             <div class="mb-3">
-              <label class="form-label">Calificación final</label>
-              <input type="number" class="form-control" min="0" max="10" step="0.1" required>
+              <label class="form-label" for="calificacion">Calificación final</label>
+              <input type="number" class="form-control" id="calificacion" min="0" max="10" step="0.1" required>
               <div class="invalid-feedback">Ingresa una calificación válida.</div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Comentario final</label>
-              <textarea class="form-control" rows="4" required></textarea>
+              <label class="form-label" for="comentario">Comentario final</label>
+              <textarea class="form-control" id="comentario" rows="4" required></textarea>
               <div class="invalid-feedback">El comentario final es obligatorio.</div>
             </div>
 
-            <div class="alert alert-success d-none" id="successFinal">
-              Calificación final guardada correctamente.
-            </div>
+            <div class="alert alert-success d-none" id="successFinal"></div>
 
-            <button type="submit" class="btn btn-dark">Guardar calificación</button>
+            <button type="submit" class="btn btn-dark" id="submitButton">Guardar calificación</button>
           </form>
         </div>
       </div>
     </div>
   </div>
 
+  <script src="js/auth.js"></script>
   <script>
     (() => {
       'use strict';
-      const forms = document.querySelectorAll('.needs-validation');
-      const successFinal = document.getElementById('successFinal');
 
-      Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-          if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-          } else {
-            event.preventDefault();
-            successFinal.classList.remove('d-none');
+      const user = Auth.requireRole('profesor');
+      if (!user) return;
+
+      const tareaSelect = document.getElementById('tareaSelect');
+      const form = document.getElementById('finalGradeForm');
+      const calificacionInput = document.getElementById('calificacion');
+      const comentarioInput = document.getElementById('comentario');
+      const loadingMsg = document.getElementById('loadingMsg');
+      const errorMsg = document.getElementById('errorMsg');
+      const successFinal = document.getElementById('successFinal');
+      const submitButton = document.getElementById('submitButton');
+      let tareas = [];
+
+      function showError(message) {
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('d-none');
+      }
+
+      function showSuccess(message) {
+        successFinal.textContent = message;
+        successFinal.classList.remove('d-none');
+      }
+
+      function getSelectedTarea() {
+        return tareas.find((tarea) => tarea._id === tareaSelect.value);
+      }
+
+      function renderSelectedTarea() {
+        const tarea = getSelectedTarea();
+        const pdfLink = document.getElementById('pdfLink');
+
+        document.getElementById('tareaTitulo').textContent = tarea?.titulo || '-';
+        document.getElementById('tareaMateria').textContent = tarea?.materia || '-';
+        document.getElementById('tareaEstado').textContent = tarea?.estado || '-';
+        calificacionInput.value = tarea?.calificacion_final ?? '';
+        comentarioInput.value = tarea?.comentario_final || '';
+        pdfLink.href = '#';
+        pdfLink.classList.add('disabled');
+
+        if (tarea?.archivo_url) {
+          pdfLink.href = `${Auth.API_BASE_URL.replace('/api', '')}${tarea.archivo_url}`;
+          pdfLink.classList.remove('disabled');
+        }
+      }
+
+      function renderTareas() {
+        tareaSelect.innerHTML = '<option value="">Selecciona una tarea</option>';
+
+        tareas.forEach((tarea) => {
+          const option = document.createElement('option');
+          option.value = tarea._id;
+          option.textContent = `${tarea.titulo} (${tarea.estado})`;
+          tareaSelect.appendChild(option);
+        });
+
+        const queryTareaId = new URLSearchParams(window.location.search).get('tarea_id');
+        if (queryTareaId && tareas.some((tarea) => tarea._id === queryTareaId)) {
+          tareaSelect.value = queryTareaId;
+        } else if (tareas.length) {
+          tareaSelect.value = tareas[0]._id;
+        }
+
+        renderSelectedTarea();
+      }
+
+      async function loadTareas() {
+        try {
+          const data = await Auth.apiFetch('/tareas?page=1&limit=100');
+          tareas = data.items || [];
+
+          if (!tareas.length) {
+            tareaSelect.innerHTML = '<option value="">No hay tareas disponibles</option>';
+            return;
           }
+
+          renderTareas();
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          loadingMsg.classList.add('d-none');
+        }
+      }
+
+      tareaSelect.addEventListener('change', renderSelectedTarea);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        errorMsg.classList.add('d-none');
+        successFinal.classList.add('d-none');
+
+        if (!tareaSelect.value) {
+          showError('Selecciona una tarea.');
+          return;
+        }
+
+        if (!form.checkValidity()) {
           form.classList.add('was-validated');
-        }, false);
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Guardando...';
+
+        try {
+          const data = await Auth.apiFetch(`/tareas/${tareaSelect.value}/calificacion`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              calificacion: Number(calificacionInput.value),
+              comentario: comentarioInput.value.trim()
+            })
+          });
+          const updated = data.tarea;
+          tareas = tareas.map((tarea) => tarea._id === updated._id ? updated : tarea);
+          renderTareas();
+          tareaSelect.value = updated._id;
+          renderSelectedTarea();
+          showSuccess('Calificación final guardada. La tarea quedó cerrada.');
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Guardar calificación';
+        }
       });
+
+      loadTareas();
     })();
   </script>
 </body>

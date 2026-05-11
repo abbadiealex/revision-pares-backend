@@ -1,1 +1,8 @@
 .env
+.env.local
+node_modules/
+uploads/*
+!uploads/tareas/
+uploads/tareas/*
+!uploads/tareas/.gitkeep
+*.log

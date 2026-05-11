@@ -6,7 +6,8 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "baseUrl", "value": "https://revision-pares-backend.onrender.com/api" },
+    { "key": "localBaseUrl", "value": "http://localhost:3000/api" },
     { "key": "token", "value": "" },
     { "key": "profesorToken", "value": "" },
     { "key": "userId", "value": "" },
@@ -100,6 +101,19 @@
           }
         },
         {
+          "name": "PUT usuario",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Evaluador API Actualizado\",\n  \"correo\": \"evaluador.api@iteso.mx\",\n  \"password\": \"Evaluador123\",\n  \"rol\": \"evaluador\",\n  \"activo\": true\n}"
+            },
+            "url": "{{baseUrl}}/usuarios/{{userId}}"
+          }
+        },
+        {
           "name": "DELETE usuario",
           "request": {
             "method": "DELETE",
@@ -152,6 +166,19 @@
           }
         },
         {
+          "name": "PUT rubrica",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Rubrica API Actualizada\",\n  \"descripcion\": \"Rubrica actualizada para revision de API REST.\",\n  \"materia\": \"Desarrollo de Aplicaciones y Servicios Web\",\n  \"activa\": true,\n  \"criterios\": [\n    { \"nombre\": \"Modelo\", \"puntaje_maximo\": 30, \"orden\": 1 },\n    { \"nombre\": \"Endpoints\", \"puntaje_maximo\": 40, \"orden\": 2 },\n    { \"nombre\": \"Validaciones\", \"puntaje_maximo\": 30, \"orden\": 3 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/rubricas/{{rubricaId}}"
+          }
+        },
+        {
           "name": "DELETE rubrica",
           "request": {
             "method": "DELETE",
@@ -198,6 +225,46 @@
           }
         },
         {
+          "name": "GET tarea por id",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "url": "{{baseUrl}}/tareas/{{tareaId}}"
+          }
+        },
+        {
+          "name": "PATCH tarea",
+          "request": {
+            "method": "PATCH",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "titulo", "value": "Ensayo API REST actualizado", "type": "text" },
+                { "key": "materia", "value": "Desarrollo de Aplicaciones y Servicios Web", "type": "text" },
+                { "key": "rubrica_id", "value": "{{rubricaId}}", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/tareas/{{tareaId}}"
+          }
+        },
+        {
+          "name": "PUT tarea",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "titulo", "value": "Ensayo API REST reemplazado", "type": "text" },
+                { "key": "materia", "value": "Desarrollo de Aplicaciones y Servicios Web", "type": "text" },
+                { "key": "rubrica_id", "value": "{{rubricaId}}", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/tareas/{{tareaId}}"
+          }
+        },
+        {
           "name": "PATCH calificacion final",
           "request": {
             "method": "PATCH",
@@ -205,6 +272,14 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"calificacion\": 9.2,\n  \"comentario\": \"Entrega completa y bien justificada.\"\n}" },
             "url": "{{baseUrl}}/tareas/{{tareaId}}/calificacion"
+          }
+        },
+        {
+          "name": "DELETE tarea",
+          "request": {
+            "method": "DELETE",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{profesorToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/tareas/{{tareaId}}"
           }
         }
       ]

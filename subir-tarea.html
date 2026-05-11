@@ -11,8 +11,9 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
       <a class="navbar-brand" href="dashboard-alumno.html">Revisión por Pares</a>
-      <div class="ms-auto">
+      <div class="ms-auto d-flex gap-2">
         <a href="dashboard-alumno.html" class="btn btn-light btn-sm">Volver</a>
+        <a href="login.html" class="btn btn-outline-light btn-sm" data-logout>Cerrar sesión</a>
       </div>
     </div>
   </nav>
@@ -21,7 +22,7 @@
     <h2 class="page-title">Subir tarea</h2>
 
     <div class="card card-shadow p-4">
-      <form class="needs-validation" novalidate>
+      <form class="needs-validation" id="uploadForm" novalidate>
         <div class="mb-3">
           <label class="form-label" for="nombreTarea">Nombre de la tarea</label>
           <input type="text" class="form-control" id="nombreTarea" required>
@@ -32,63 +33,153 @@
           <label class="form-label" for="materia">Materia</label>
           <select class="form-select" id="materia" required>
             <option value="">Selecciona una materia</option>
-            <option>Desarrollo de Aplicaciones y Servicios Web</option>
-            <option>Interfaces Web</option>
-            <option>Bases de Datos</option>
           </select>
           <div class="invalid-feedback">Selecciona una materia.</div>
         </div>
 
         <div class="mb-3">
+          <label class="form-label" for="rubrica">Rúbrica</label>
+          <select class="form-select" id="rubrica" required>
+            <option value="">Cargando rúbricas...</option>
+          </select>
+          <div class="invalid-feedback">Selecciona una rúbrica.</div>
+        </div>
+
+        <div class="mb-3">
           <label class="form-label" for="archivo">Archivo PDF</label>
-          <input type="file" class="form-control" id="archivo" accept=".pdf" required>
+          <input type="file" class="form-control" id="archivo" accept="application/pdf,.pdf" required>
           <div class="invalid-feedback">Debes subir un archivo PDF.</div>
         </div>
 
-        <div class="alert alert-success d-none" id="successMsg">
-          Tarea subida correctamente. Los evaluadores fueron asignados.
-        </div>
+        <div class="alert alert-success d-none" id="successMsg"></div>
+        <div class="alert alert-danger d-none" id="errorMsg"></div>
 
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">Subir tarea</button>
+          <button type="submit" class="btn btn-primary" id="submitButton">Subir tarea</button>
           <a href="mis-entregas.html" class="btn btn-outline-secondary">Ver mis entregas</a>
         </div>
       </form>
     </div>
   </div>
 
+  <script src="js/auth.js"></script>
   <script>
     (() => {
       'use strict';
-      const forms = document.querySelectorAll('.needs-validation');
-      const successMsg = document.getElementById('successMsg');
+
+      const user = Auth.requireRole('alumno');
+      if (!user) return;
+
+      const form = document.getElementById('uploadForm');
+      const tituloInput = document.getElementById('nombreTarea');
+      const materiaSelect = document.getElementById('materia');
+      const rubricaSelect = document.getElementById('rubrica');
       const archivoInput = document.getElementById('archivo');
+      const successMsg = document.getElementById('successMsg');
+      const errorMsg = document.getElementById('errorMsg');
+      const submitButton = document.getElementById('submitButton');
+      let rubricas = [];
 
-      Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-          const file = archivoInput.files[0];
-          let validPDF = true;
+      function showMessage(element, message) {
+        element.textContent = message;
+        element.classList.remove('d-none');
+      }
 
-          if (file && !file.name.toLowerCase().endsWith('.pdf')) {
-            validPDF = false;
-            archivoInput.setCustomValidity('Archivo inválido');
-          } else {
-            archivoInput.setCustomValidity('');
+      function hideMessages() {
+        successMsg.classList.add('d-none');
+        errorMsg.classList.add('d-none');
+      }
+
+      function fillMateriaOptions() {
+        const materias = [...new Set(rubricas.map((rubrica) => rubrica.materia).filter(Boolean))];
+        materiaSelect.innerHTML = '<option value="">Selecciona una materia</option>';
+        materias.forEach((materia) => {
+          materiaSelect.insertAdjacentHTML('beforeend', `<option value="${materia}">${materia}</option>`);
+        });
+      }
+
+      function fillRubricaOptions() {
+        const materia = materiaSelect.value;
+        const filtered = materia ? rubricas.filter((rubrica) => rubrica.materia === materia) : rubricas;
+        rubricaSelect.innerHTML = '<option value="">Selecciona una rúbrica</option>';
+        filtered.forEach((rubrica) => {
+          rubricaSelect.insertAdjacentHTML(
+            'beforeend',
+            `<option value="${rubrica._id}">${rubrica.titulo}</option>`
+          );
+        });
+      }
+
+      async function loadRubricas() {
+        try {
+          const data = await Auth.apiFetch('/rubricas?page=1&limit=100&activa=true');
+          rubricas = data.items || [];
+
+          if (rubricas.length === 0) {
+            rubricaSelect.innerHTML = '<option value="">No hay rúbricas activas</option>';
+            showMessage(errorMsg, 'No hay rúbricas activas. Un profesor debe crear una antes de subir tareas.');
+            return;
           }
 
-          if (!form.checkValidity() || !validPDF) {
-            event.preventDefault();
-            event.stopPropagation();
-          } else {
-            event.preventDefault();
-            successMsg.classList.remove('d-none');
-            form.reset();
-            form.classList.remove('was-validated');
-          }
+          fillMateriaOptions();
+          fillRubricaOptions();
+        } catch (error) {
+          rubricaSelect.innerHTML = '<option value="">No se pudieron cargar rúbricas</option>';
+          showMessage(errorMsg, error.message);
+        }
+      }
 
+      materiaSelect.addEventListener('change', fillRubricaOptions);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        hideMessages();
+
+        const file = archivoInput.files[0];
+        if (file && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+          archivoInput.setCustomValidity('Archivo inválido');
+        } else {
+          archivoInput.setCustomValidity('');
+        }
+
+        if (!form.checkValidity()) {
           form.classList.add('was-validated');
-        }, false);
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('titulo', tituloInput.value.trim());
+        formData.append('materia', materiaSelect.value);
+        formData.append('rubrica_id', rubricaSelect.value);
+        formData.append('archivo', file);
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Subiendo...';
+
+        try {
+          const data = await Auth.apiFetch('/tareas', {
+            method: 'POST',
+            body: formData
+          });
+          const asignaciones = data.asignaciones?.length || 0;
+          showMessage(
+            successMsg,
+            `Tarea subida correctamente. Asignaciones creadas: ${asignaciones}.`
+          );
+          form.reset();
+          form.classList.remove('was-validated');
+          fillMateriaOptions();
+          fillRubricaOptions();
+        } catch (error) {
+          showMessage(errorMsg, error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Subir tarea';
+        }
       });
+
+      loadRubricas();
     })();
   </script>
 </body>
