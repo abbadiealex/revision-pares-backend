@@ -6,6 +6,7 @@ Proyecto full stack para gestionar entregas academicas, asignacion de revisores 
 
 | Recurso | URL |
 | --- | --- |
+| Frontend en produccion | https://revision-pares-frontend.onrender.com |
 | Backend en produccion | https://revision-pares-backend.onrender.com |
 | Health check | https://revision-pares-backend.onrender.com/health |
 | API base en produccion | https://revision-pares-backend.onrender.com/api |
@@ -24,7 +25,7 @@ Proyecto full stack para gestionar entregas academicas, asignacion de revisores 
 
 Backend: operativo en Render. El 11/05/2026 se verifico `/health`, login de profesor/alumno/evaluador y rutas protegidas de usuarios, rubricas, tareas y asignaciones vencidas.
 
-Frontend: las pantallas HTML tienen navegacion clara desde `index.html` y `login.html`. El login consume Render con `POST /api/auth/login`, guarda token y usuario en `sessionStorage`, redirige por rol y protege las pantallas principales. El flujo principal ya consume API desde frontend: alumno sube tarea PDF, evaluador consulta asignaciones y envia evaluacion, profesor cierra con calificacion final y alumno consulta sus entregas. Usuarios y gestion completa de rubricas siguen como prototipo visual.
+Frontend: las pantallas HTML tienen navegacion clara desde `index.html` y `login.html`. El login consume Render con `POST /api/auth/login`, guarda token y usuario en `sessionStorage`, redirige por rol y protege las pantallas principales. El despliegue estatico en Render genera `dist/` con solo HTML, CSS y JS mediante `scripts/build-static.sh`, sin publicar `backend/`, `.env` ni `node_modules`. El flujo principal ya consume API desde frontend: alumno sube tarea PDF, evaluador consulta asignaciones y envia evaluacion, profesor cierra con calificacion final y alumno consulta sus entregas. Usuarios y gestion completa de rubricas siguen como prototipo visual.
 
 ## Ejecutar localmente
 
@@ -40,12 +41,18 @@ npm run dev
 
 Frontend:
 
-Abrir `index.html` o `login.html` en el navegador. Para probar el login real contra Render, se recomienda usar Live Server u otro servidor estatico local. El backend permite estos dos origenes locales: `http://localhost:5500` y `http://127.0.0.1:5500`. Si se usa otro dominio, agregarlo en Render a `FRONTEND_ORIGIN` separado por coma.
+Abrir `index.html` o `login.html` en el navegador para revisar las pantallas estaticas. Para probar login y llamadas reales a la API en local, servir la carpeta con cualquier servidor estatico HTTP, por ejemplo:
 
-URLs locales recomendadas para probar:
+```bash
+python -m http.server 5500
+```
 
-- `http://localhost:5500/proyecto/ui-prototipo/login.html`
-- `http://127.0.0.1:5500/proyecto/ui-prototipo/login.html`
+URLs locales recomendadas para probar desde la raiz del proyecto:
+
+- `http://localhost:5500/login.html`
+- `http://127.0.0.1:5500/login.html`
+
+El frontend no depende de Live Server. En produccion se sirve como Static Site de Render desde `dist/`.
 
 Si Render ya estaba desplegado antes del ajuste de CORS, del hook de evaluaciones y del endpoint `GET /api/evaluaciones?tareaId=...`, hacer redeploy del backend para que acepte ambos origenes, permita enviar evaluaciones desde frontend y muestre evaluaciones recibidas al profesor.
 
@@ -57,9 +64,31 @@ Variables necesarias en `backend/.env`:
 | `PORT` | Puerto local o el asignado por Render. |
 | `MONGODB_URI` | Conexion de MongoDB/MongoDB Atlas. |
 | `JWT_SECRET` | Secreto privado para firmar JWT. |
-| `FRONTEND_ORIGIN` | Origenes permitidos por CORS, separados por coma. |
+| `FRONTEND_ORIGIN` | Origenes permitidos por CORS, separados por coma. Debe incluir `https://revision-pares-frontend.onrender.com`. |
 | `EVALUACION_DIAS_LIMITE` | Dias limite para evaluaciones. |
 | `CRON_VENCIMIENTOS` | Expresion cron para revisar vencimientos. |
+
+## Despliegue del frontend en Render
+
+Crear un servicio nuevo de tipo **Static Site** apuntando a este mismo repositorio.
+
+Configuracion:
+
+| Campo | Valor |
+| --- | --- |
+| Root Directory | `.` |
+| Build Command | `bash scripts/build-static.sh` |
+| Publish Directory | `dist` |
+
+Nombre recomendado del servicio: `revision-pares-frontend`.
+
+Con ese nombre, la URL esperada del frontend es:
+
+```text
+https://revision-pares-frontend.onrender.com
+```
+
+Antes de probar login en produccion, confirmar que el backend desplegado tenga `FRONTEND_ORIGIN=https://revision-pares-frontend.onrender.com` o que incluya esa URL dentro de la lista separada por comas.
 
 ## Entrega ZIP
 
@@ -67,6 +96,7 @@ El ZIP debe incluir este proyecto completo, pero excluir:
 
 - `backend/node_modules/`
 - `backend/.env`
+- `dist/`
 - `.git/`
 - archivos subidos en `backend/uploads/`, excepto `.gitkeep`
 
