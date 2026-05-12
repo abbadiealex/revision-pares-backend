@@ -6,7 +6,7 @@ Proyecto full stack para gestionar entregas academicas, asignacion de revisores 
 
 | Recurso | URL |
 | --- | --- |
-| Frontend en produccion | https://revision-pares-frontend.onrender.com |
+| Frontend en produccion | https://revision-pares-backend-1.onrender.com |
 | Backend en produccion | https://revision-pares-backend.onrender.com |
 | Health check | https://revision-pares-backend.onrender.com/health |
 | API base en produccion | https://revision-pares-backend.onrender.com/api |
@@ -64,7 +64,7 @@ Variables necesarias en `backend/.env`:
 | `PORT` | Puerto local o el asignado por Render. |
 | `MONGODB_URI` | Conexion de MongoDB/MongoDB Atlas. |
 | `JWT_SECRET` | Secreto privado para firmar JWT. |
-| `FRONTEND_ORIGIN` | Origenes permitidos por CORS, separados por coma. Debe incluir `https://revision-pares-frontend.onrender.com`. |
+| `FRONTEND_ORIGIN` | Origenes permitidos por CORS, separados por coma. Debe incluir `https://revision-pares-backend-1.onrender.com`. |
 | `EVALUACION_DIAS_LIMITE` | Dias limite para evaluaciones. |
 | `CRON_VENCIMIENTOS` | Expresion cron para revisar vencimientos. |
 
@@ -80,15 +80,15 @@ Configuracion:
 | Build Command | `bash scripts/build-static.sh` |
 | Publish Directory | `dist` |
 
-Nombre recomendado del servicio: `revision-pares-frontend`.
+Nombre actual del servicio frontend: `revision-pares-backend-1`.
 
-Con ese nombre, la URL esperada del frontend es:
+Con ese nombre, la URL del frontend es:
 
 ```text
-https://revision-pares-frontend.onrender.com
+https://revision-pares-backend-1.onrender.com
 ```
 
-Antes de probar login en produccion, confirmar que el backend desplegado tenga `FRONTEND_ORIGIN=https://revision-pares-frontend.onrender.com` o que incluya esa URL dentro de la lista separada por comas.
+Antes de probar login en produccion, confirmar que el backend desplegado tenga `FRONTEND_ORIGIN=https://revision-pares-backend-1.onrender.com` o que incluya esa URL dentro de la lista separada por comas.
 
 ## Entrega ZIP
 
